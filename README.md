@@ -1,5 +1,5 @@
 # bpg-ww
-### (forked from @m-2k)
+##### (forked from @m-2k)
 BPG JavaScript Decoder on WebWorkers
 
 Allows 8 bit depth BPG images and animations
