@@ -7,42 +7,52 @@ Allows 8 bit depth BPG images and animations
 ## Usage
 
 ```javascript
-var bpgw = new Worker('/static/bpgdec8a-ww.min.js');
-bpgw.onmessage = function(e) {
-    switch(e.data.type) {
-        case 'log': console.log('Worker log:' + e.data.message); break;
-        case 'debug': console.log('Worker debug:' + e.data.data); debugger; break;
+const worker = new Worker('/static/bpgdec8a-ww.min.js');
+
+worker.onmessage = (event) => {
+    switch(event.data.type) {
+        case 'log': console.log(`Worker log: ${event.data.message}`); break;
+        case 'debug': console.log(`Worker debug: ${event.data.data}`); break;
         case 'res':
-            var img = e.data.image;
-            var frames = e.data.frames;
-            var loop_count = e.data.loop_count;
-            var cnv = document.getElementById(e.data.meta);
-            cnv.width = img.width;
-            cnv.height = img.height;
+            let image = event.data.image;
+            let frames = event.data.frames;
+            let loop_count = event.data.loop_count;
+            let canvas = document.getElementById(event.data.meta);
+            canvas.width = image.width;
+            canvas.height = image.height;
             
-            var ctx = cnv.getContext('2d');
+            let context = canvas.getContext('2d');
 
             (function() {
                 function d() {
-                    var a = img.n;
-                    ++a >= frames.length && (0 == loop_count || img.q < loop_count ? (a = 0, img.q++) : a =- 1);
-                    0 <= a && (img.n = a, ctx.putImageData(frames[a].img, 0, 0), setTimeout(d, frames[a].duration))
+                    var a = image.n;
+                    ++a >= frames.length && (0 == loop_count || image.q < loop_count ? (a = 0, image.q++) : a =- 1);
+                    0 <= a && (image.n = a, context.putImageData(frames[a].image, 0, 0), setTimeout(d, frames[a].duration))
                 };
-                ctx.putImageData(img, 0, 0);
-                frames.length > 1 && (img.n = 0, img.q = 0, setTimeout(d, frames[0].duration));
-            }.bind(ctx,img,frames,loop_count))();
+                context.putImageData(image, 0, 0);
+                frames.length > 1 && (image.n = 0, image.q = 0, setTimeout(d, frames[0].duration));
+            }.bind(context, image, frames, loop_count))();
 
             console.log('Decode done');
             break;
-        default: console.log('Unknown event:' + e.data);
+        default: console.log(`Unknown event: ${event.data}`); break;
     };
 };
 
-// arrayBuffer: BPG image
-// container: id of canvas (DOM) for rendering
-function decodeBpg(arrayBuffer,container) {
-    bpgw.postMessage({type:'image', img:arrayBuffer, meta:container});
-};
+/**
+ * Decodes an bpg image
+ *
+ * @param  [ArrayBuffer] buffer
+ * @param  [String] element
+ * @return [void]
+ */
+function decodeBpg(buffer, element) {
+    worker.postMessage({
+        type: 'image',
+        img: buffer,
+        meta: element
+    });
+}
 ```
 
 ### More info
